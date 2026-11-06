@@ -1,0 +1,186 @@
+{
+  "info": {
+    "name": "AuraStream – Unified Market Data API",
+    "description": "One endpoint for crypto, FX, rates, macro, positioning and alternative data from 47 sources.\n\n1. Get a free key (500 calls/month, no card): https://aurastream.unbiased-alpha.com\n2. Set the `apiKey` collection variable.\n3. Send any request.\n\nDocs: https://aurastream.unbiased-alpha.com/docs/",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "x-api-key"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}"
+      },
+      {
+        "key": "in",
+        "value": "header"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.aurastream.unbiased-alpha.com"
+    },
+    {
+      "key": "apiKey",
+      "value": "YOUR_AURASTREAM_API_KEY"
+    }
+  ],
+  "item": [
+    {
+      "name": "Bitcoin daily candles from Bybit (no provider account)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tickerlist\": [\n    \"BTCUSDT\"\n  ],\n  \"start\": \"2025-01-01\",\n  \"end\": \"2025-01-31\",\n  \"interval\": \"1d\",\n  \"source\": \"bybit\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/timeseries",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "timeseries"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Binance perpetual funding rates",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tickerlist\": [\n    \"BTCUSDT\",\n    \"ETHUSDT\"\n  ],\n  \"start\": \"2025-06-01\",\n  \"end\": \"2025-06-30\",\n  \"interval\": \"8h\",\n  \"source\": \"binance\",\n  \"instrument\": \"futures\",\n  \"bars\": \"funding\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/timeseries",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "timeseries"
+          ]
+        }
+      }
+    },
+    {
+      "name": "ECB EUR/USD and EUR/JPY reference rates",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tickerlist\": [\n    \"ECB,EXR,1.0/D.USD.EUR.SP00.A\",\n    \"ECB,EXR,1.0/D.JPY.EUR.SP00.A\"\n  ],\n  \"start\": \"2025-01-01\",\n  \"end\": \"2025-06-30\",\n  \"interval\": \"1d\",\n  \"source\": \"sdmx\",\n  \"db\": \"ECB\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/timeseries",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "timeseries"
+          ]
+        }
+      }
+    },
+    {
+      "name": "CFTC Commitments of Traders, gold, stamped at release date",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tickerlist\": [\n    \"GC\"\n  ],\n  \"start\": \"2020-01-01\",\n  \"end\": \"2025-01-01\",\n  \"interval\": \"1w\",\n  \"source\": \"cftc\",\n  \"as_of\": \"release\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/timeseries",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "timeseries"
+          ]
+        }
+      }
+    },
+    {
+      "name": "US CPI with every revision (free FRED key)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tickerlist\": [\n    \"CPIAUCSL\"\n  ],\n  \"start\": \"2020-01-01\",\n  \"end\": \"2025-01-01\",\n  \"interval\": \"1m\",\n  \"source\": \"fred\",\n  \"credentials\": {\n    \"key\": \"YOUR_FRED_KEY\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/timeseries",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "timeseries"
+          ]
+        }
+      }
+    }
+  ]
+}

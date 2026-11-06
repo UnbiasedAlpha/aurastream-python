@@ -1,0 +1,379 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AuraStream",
+    "version": "1.0.0",
+    "description": "Unified market data API for quants: one endpoint and one response format for crypto, FX, rates,\nmacro, positioning and alternative data from 47 sources (Binance, Bybit, Kraken, Deribit, Hyperliquid,\nFRED, US Treasury, SDMX/ECB/BIS/OECD, World Bank, CFTC, SEC EDGAR, USDA WASDE, GDELT and more), plus\nbrokers and vendors you have an account with (Oanda, Alpaca, Polygon...).\n\nFree plan: 500 calls per month, no card. Get a key at https://aurastream.unbiased-alpha.com\n",
+    "contact": {
+      "name": "Unbiased Alpha GmbH",
+      "email": "contact@unbiased-alpha.com",
+      "url": "https://unbiased-alpha.com/aurastream"
+    }
+  },
+  "externalDocs": {
+    "description": "Full documentation and per-source reference",
+    "url": "https://aurastream.unbiased-alpha.com/docs/"
+  },
+  "servers": [
+    {
+      "url": "https://api.aurastream.unbiased-alpha.com"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Time series",
+      "description": "Historical bars, trades, quotes, macro series, positioning and signals"
+    }
+  ],
+  "paths": {
+    "/timeseries": {
+      "post": {
+        "tags": [
+          "Time series"
+        ],
+        "operationId": "getTimeseries",
+        "summary": "Fetch historical time series from any supported source",
+        "description": "Returns `{ticker: {timestamp: {field: value}}}`. Timestamps are UTC strings (`YYYY-MM-DD HH:MM:SS`).\nField names vary by source (e.g. Polygon adds `VWAP` and `NTrades`, Alpaca uses lower-case names).\nBinance, Bybit, Kraken and Oanda return prices as strings. The gateway stops a request after about\n30 seconds (504): split long date ranges or ticker lists into several requests.\nAny additional body field is passed to the source; sources ignore fields they do not use.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeseriesRequest"
+              },
+              "examples": {
+                "crypto": {
+                  "summary": "Bitcoin daily candles from Bybit (no provider account)",
+                  "value": {
+                    "tickerlist": [
+                      "BTCUSDT"
+                    ],
+                    "start": "2025-01-01",
+                    "end": "2025-01-31",
+                    "interval": "1d",
+                    "source": "bybit"
+                  }
+                },
+                "funding": {
+                  "summary": "Binance perpetual funding rates",
+                  "value": {
+                    "tickerlist": [
+                      "BTCUSDT",
+                      "ETHUSDT"
+                    ],
+                    "start": "2025-06-01",
+                    "end": "2025-06-30",
+                    "interval": "8h",
+                    "source": "binance",
+                    "instrument": "futures",
+                    "bars": "funding"
+                  }
+                },
+                "fx": {
+                  "summary": "ECB daily EUR/USD and EUR/JPY reference rates (SDMX, no provider account)",
+                  "value": {
+                    "tickerlist": [
+                      "ECB,EXR,1.0/D.USD.EUR.SP00.A",
+                      "ECB,EXR,1.0/D.JPY.EUR.SP00.A"
+                    ],
+                    "start": "2025-01-01",
+                    "end": "2025-06-30",
+                    "interval": "1d",
+                    "source": "sdmx",
+                    "db": "ECB"
+                  }
+                },
+                "cot": {
+                  "summary": "CFTC Commitments of Traders, gold, stamped at release date",
+                  "value": {
+                    "tickerlist": [
+                      "GC"
+                    ],
+                    "start": "2020-01-01",
+                    "end": "2025-01-01",
+                    "interval": "1w",
+                    "source": "cftc",
+                    "as_of": "release"
+                  }
+                },
+                "fred": {
+                  "summary": "US CPI with every revision (free FRED key)",
+                  "value": {
+                    "tickerlist": [
+                      "CPIAUCSL"
+                    ],
+                    "start": "2020-01-01",
+                    "end": "2025-01-01",
+                    "interval": "1m",
+                    "source": "fred",
+                    "credentials": {
+                      "key": "YOUR_FRED_KEY"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Time series keyed by ticker, then by UTC timestamp. Request errors (unknown source, missing\ncredentials) currently also answer 200, with a single `error` field: `{\"error\": \"fred needs credentials\"}`.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeseriesResponse"
+                },
+                "example": {
+                  "BTCUSDT": {
+                    "2025-01-01 00:00:00": {
+                      "Open": 94500.0,
+                      "High": 95200.0,
+                      "Low": 93800.0,
+                      "Close": 94900.0
+                    },
+                    "2025-01-02 00:00:00": {
+                      "Open": 94900.0,
+                      "High": 96100.0,
+                      "Low": 94200.0,
+                      "Close": 95800.0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown source, bad date format, unsupported interval, or missing credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing, invalid, deleted or paused API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "message": "Forbidden"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "\"Limit Exceeded\" (monthly allowance used) or \"Too Many Requests\" (rate limit). Not counted against the allowance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "message": "Too Many Requests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Upstream data source failure (safe to retry with backoff)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "The request took longer than about 30 seconds. The same request would time out again; split it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "message": "Endpoint request timed out"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      }
+    },
+    "schemas": {
+      "TimeseriesRequest": {
+        "type": "object",
+        "required": [
+          "tickerlist",
+          "start",
+          "end",
+          "interval",
+          "source"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "tickerlist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ticker symbols in the source's own format (e.g. BTCUSDT, EUR_USD, SPY, CPIAUCSL, GC)"
+          },
+          "start": {
+            "type": "string",
+            "description": "`YYYY-MM-DD` or `YYYY-MM-DD HH:MM`, UTC",
+            "example": "2025-01-01"
+          },
+          "end": {
+            "type": "string",
+            "description": "`YYYY-MM-DD` or `YYYY-MM-DD HH:MM`, UTC",
+            "example": "2025-01-31"
+          },
+          "interval": {
+            "type": "string",
+            "description": "Bar interval. Case matters: `1M` = 1 minute, `1m` = 1 month. Support varies by source.",
+            "enum": [
+              "1s",
+              "5s",
+              "30s",
+              "1M",
+              "5M",
+              "15M",
+              "30M",
+              "1h",
+              "4h",
+              "8h",
+              "1d",
+              "1w",
+              "1m"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "description": "Data source identifier",
+            "enum": [
+              "binance",
+              "bybit",
+              "kraken",
+              "deribit",
+              "kucoin",
+              "nemeton",
+              "hyperliquid",
+              "dydx",
+              "lyra",
+              "coinapi",
+              "coingecko",
+              "yahoo",
+              "alpaca",
+              "polygon",
+              "oanda",
+              "firstrate",
+              "tradestation",
+              "cityindex",
+              "fred",
+              "eia",
+              "treasury",
+              "sdmx",
+              "worldbank",
+              "nasdaq",
+              "tradingeconomics",
+              "econcalendar",
+              "bea",
+              "fedtext",
+              "usaspending",
+              "finnhub",
+              "edgar",
+              "cftc",
+              "netshort",
+              "hmrc",
+              "comext",
+              "uscensus",
+              "hktrade",
+              "defillama",
+              "gdelt",
+              "googleads",
+              "openmeteo",
+              "visualcrossing",
+              "tsa",
+              "warn",
+              "wasde",
+              "degreedays",
+              "signals"
+            ]
+          },
+          "credentials": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Provider credentials, passed through and never stored (e.g. `{\"key\": \"...\"}` for FRED)."
+          },
+          "dtype": {
+            "type": "string",
+            "description": "Alpaca: bars|trades|quotes. Oanda: bars|orderbook|positionbook. Yahoo: candles|earnings."
+          },
+          "instrument": {
+            "type": "string",
+            "description": "Binance: spot|futures. Kraken: futures|spot."
+          },
+          "bars": {
+            "type": "string",
+            "description": "Binance: candles|funding (futures only)."
+          },
+          "price_type": {
+            "type": "string",
+            "description": "Oanda: M (mid) | A (ask) | B (bid)."
+          },
+          "dataset": {
+            "type": "string",
+            "description": "SEC EDGAR: insider|financials|earnings|ftd|13f. Signals: crypto_leverage, fed_tone, short_crowding, ..."
+          },
+          "db": {
+            "type": "string",
+            "description": "SDMX: provider ID (ECB, BIS, ESTAT, OECD...). Required for source sdmx."
+          },
+          "as_of": {
+            "type": "string",
+            "description": "FRED: realtime_start|date. CFTC: release|report."
+          }
+        }
+      },
+      "TimeseriesResponse": {
+        "type": "object",
+        "description": "`{ticker: {timestamp: {field: value}}}`. A ticker with no data maps to `{}`.",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

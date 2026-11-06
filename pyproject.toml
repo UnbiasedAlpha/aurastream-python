@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aurastream"
+dynamic = ["version"]
+description = "Python client for AuraStream: one API for crypto, FX, macro, positioning and alternative data from 47 sources."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Unbiased Alpha GmbH", email = "contact@unbiased-alpha.com" }]
+keywords = ["market data", "financial data", "api", "quant", "trading", "crypto", "forex", "macro", "fred", "binance"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+dependencies = ["requests>=2.28"]
+
+[project.optional-dependencies]
+pandas = ["pandas>=1.5"]
+dev = ["pandas>=1.5", "pytest>=7", "responses>=0.23"]
+
+[project.urls]
+Homepage = "https://unbiased-alpha.com/aurastream"
+Documentation = "https://aurastream.unbiased-alpha.com/docs/"
+Source = "https://github.com/UnbiasedAlpha/aurastream-python"
+"Get an API key" = "https://aurastream.unbiased-alpha.com"
+
+[tool.hatch.version]
+path = "src/aurastream_client/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aurastream_client"]
